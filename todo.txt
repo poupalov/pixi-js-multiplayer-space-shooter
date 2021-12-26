@@ -1,0 +1,4 @@
+- Prevent cheating and concurrency issues
+    - On the server, use a mutex lock and client timestamp information to make sure input events are handled correctly in the right order
+    - On the server, send obfuscated IDs to the clients so that they cannot cheat
+- On the client, handle 'open', 'close' and 'error' messages
