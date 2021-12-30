@@ -23,7 +23,7 @@ Then:
 - You can start the server by running `npx ts-node src/main.ts` in the `server` folder
 - You can start the client by running `npx tsc -w` and `npm start` in the `client` folder, in 2 shells
 
-Finally, you can add different players into different browser tabs by opening [http://localhost:3000](http://localhost:3000). You can move the player's spaceship with the WASD or arrow keys.
+Finally, you can add different players into different browser tabs by opening [http://localhost:3000](http://localhost:3000). You can move the player's spaceship with the ZQSD or arrow keys.
 
 ## About the architecture
 
