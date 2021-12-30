@@ -76,5 +76,15 @@ export function rerenderPlayers(
     playerClientState.sprite.x = playerServerState.x;
     playerClientState.sprite.y = playerServerState.y;
   }
-  // TODO: add cleanup to remove client-side players that no longer exist server-side
+}
+
+export function cleanDisconnectedPlayers(gameState: GameState) {
+  for (const [playerId, playerClientState] of Object.entries(
+    gameState.clientPlayerMap
+  )) {
+    if (!gameState.serverPlayerMap[playerId]) {
+      playerClientState.sprite.destroy();
+      delete gameState.clientPlayerMap[playerId];
+    }
+  }
 }

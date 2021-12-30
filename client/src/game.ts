@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 
-import { Player, rerenderPlayers } from "./player";
+import { Player, rerenderPlayers, cleanDisconnectedPlayers } from "./player";
 import {
   parseMessage,
   ServerMessage,
@@ -34,7 +34,10 @@ export async function startGame(app: PIXI.Application): Promise<void> {
       | undefined = parseMessage<ServerMessage>(message.data);
     if (parsedMessage) handleServerMessage(app, gameState, parsedMessage);
   };
-  app.ticker.add(() => rerenderPlayers(app, gameState));
+  app.ticker.add(() => {
+    rerenderPlayers(app, gameState);
+    cleanDisconnectedPlayers(gameState);
+  });
   app.ticker.add(() => sendInputsToServer(gameState, webSocket));
 }
 
