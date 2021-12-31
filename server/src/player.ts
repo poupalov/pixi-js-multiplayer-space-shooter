@@ -19,19 +19,20 @@ export type PlayerInputEvent = {
 };
 
 export type Player = {
-  id: string;
+  publicId: string;
+  privateId: string;
   x: number;
   y: number;
   lastInputEvent: PlayerInputEvent;
 };
 
 // TODO: return random coordinates instead of (0, 0)
-export function initPlayer(id: string): Player {
+export function initPlayer(publicId: string, privateId: string): Player {
   const lastInputEvent: PlayerInputEvent = {
     timestamp: Number((new Date().valueOf() / 1000).toString()),
     inputMap: {},
   };
-  return { id, x: 0, y: 0, lastInputEvent };
+  return { publicId, privateId, x: 0, y: 0, lastInputEvent };
 }
 
 export function updatePlayerPosition(
@@ -45,6 +46,6 @@ export function updatePlayerPosition(
   if (inputMap[PlayerInput.moveLeft]) player.x -= timeDelta * PLAYER_SPEED;
   if (inputMap[PlayerInput.moveRight]) player.x += timeDelta * PLAYER_SPEED;
   player.x = (player.x + VIEW_WIDTH) % VIEW_WIDTH;
-  player.y = Math.max(0, Math.min(player.y, VIEW_HEIGHT));
+  player.y = (player.y + VIEW_HEIGHT) % VIEW_HEIGHT;
   player.lastInputEvent = inputEvent;
 }

@@ -18,14 +18,14 @@ const DELAY_BETWEEN_UPDATES_IN_MILISECONDS =
   1000 / NUMBER_OF_UPDATES_SENT_PER_SECOND;
 
 export type GameState = {
-  playerIdToSocketMap: { [playerId: string]: WebSocket };
-  playerIdToPlayerMap: { [playerId: string]: Player };
+  socketMap: { [privatePlayerId: string]: WebSocket };
+  playerMap: { [privatePlayerId: string]: Player };
 };
 
 async function mainLoop() {
   const gameState: GameState = {
-    playerIdToSocketMap: {},
-    playerIdToPlayerMap: {},
+    socketMap: {},
+    playerMap: {},
   };
   launchServer(gameState);
   setInterval(() => {
@@ -40,11 +40,12 @@ function launchServer(gameState: GameState) {
     console.log(`Launched game server on port ${SERVER_PORT_NUMBER}`);
   });
   server.on("connection", (playerSocket) => {
-    const playerId: string = uuid();
-    console.log(`New player connected (playerId = ${playerId})`);
-    gameState.playerIdToSocketMap[playerId] = playerSocket;
-    gameState.playerIdToPlayerMap[playerId] = initPlayer(playerId);
-    playerSocket.send(buildConnectionSuccessMessage(playerId));
+    const publicId: string = uuid();
+    const privateId: string = uuid();
+    console.log(`New player connected (playerId = ${privateId})`);
+    gameState.socketMap[privateId] = playerSocket;
+    gameState.playerMap[privateId] = initPlayer(publicId, privateId);
+    playerSocket.send(buildConnectionSuccessMessage(publicId, privateId));
     playerSocket.on("message", (message) => {
       const parsedMessage:
         | PlayerMessage
@@ -52,9 +53,9 @@ function launchServer(gameState: GameState) {
       if (parsedMessage) handlePlayerMessage(gameState, parsedMessage);
     });
     playerSocket.on("close", () => {
-      console.log(`Closing connection with player (playerId = ${playerId})`);
-      delete gameState.playerIdToSocketMap[playerId];
-      delete gameState.playerIdToPlayerMap[playerId];
+      console.log(`Closing connection with player (playerId = ${privateId})`);
+      delete gameState.socketMap[privateId];
+      delete gameState.playerMap[privateId];
     });
   });
   server.on("listening", () => {
@@ -63,6 +64,6 @@ function launchServer(gameState: GameState) {
 }
 
 function sendGameStateToPlayers(gameState: GameState) {
-  for (const playerSocket of Object.values(gameState.playerIdToSocketMap))
+  for (const playerSocket of Object.values(gameState.socketMap))
     playerSocket.send(buildGameStateMessage(gameState));
 }

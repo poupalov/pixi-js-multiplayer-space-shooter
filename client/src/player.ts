@@ -2,21 +2,21 @@ import * as PIXI from "pixi.js";
 
 import { GameState } from "./game";
 
-export function addPlayer(app: PIXI.Application, id: string): Player {
-  const player: Player = initPlayer(id);
+export function addPlayer(app: PIXI.Application, publicId: string): Player {
+  const player: Player = initPlayer(publicId);
   app.stage.addChild(player.sprite);
   return player;
 }
 
 export type Player = {
-  id: string;
+  publicId: string;
   sprite: PIXI.Sprite;
   inputMap: { [playerInput: string]: boolean };
 };
 
-function initPlayer(id: string): Player {
+function initPlayer(publicId: string): Player {
   return {
-    id,
+    publicId,
     sprite: initPlayerSprite(),
     inputMap: initPlayerInputMap(),
   };

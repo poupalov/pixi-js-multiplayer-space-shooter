@@ -9,11 +9,12 @@ import {
 } from "./messages";
 
 export type GameState = {
-  ownPlayerId: string | undefined;
-  clientPlayerMap: { [playerId: string]: Player };
+  ownPublicId: string | undefined;
+  ownPrivateId: string | undefined;
+  clientPlayerMap: { [publicPlayerId: string]: Player };
   serverPlayerMap: {
-    [playerId: string]: {
-      id: string;
+    [publicPlayerId: string]: {
+      publicId: string;
       x: number;
       y: number;
     };
@@ -22,7 +23,8 @@ export type GameState = {
 
 export async function startGame(app: PIXI.Application): Promise<void> {
   const gameState: GameState = {
-    ownPlayerId: undefined,
+    ownPublicId: undefined,
+    ownPrivateId: undefined,
     clientPlayerMap: {},
     serverPlayerMap: {},
   };
@@ -32,17 +34,22 @@ export async function startGame(app: PIXI.Application): Promise<void> {
     const parsedMessage:
       | ServerMessage
       | undefined = parseMessage<ServerMessage>(message.data);
-    if (parsedMessage) handleServerMessage(app, gameState, parsedMessage);
+    if (parsedMessage) handleServerMessage(gameState, parsedMessage);
   };
   app.ticker.add(() => {
     rerenderPlayers(app, gameState);
     cleanDisconnectedPlayers(gameState);
   });
-  app.ticker.add(() => sendInputsToServer(gameState, webSocket));
+  app.ticker.add(() => sendOwnInputsToServer(gameState, webSocket));
 }
 
-function sendInputsToServer(gameState: GameState, webSocket: WebSocket): void {
-  const { ownPlayerId, clientPlayerMap } = gameState;
-  if (ownPlayerId && clientPlayerMap[ownPlayerId])
-    webSocket.send(buildPlayerInputMessage(clientPlayerMap[ownPlayerId]));
+function sendOwnInputsToServer(
+  gameState: GameState,
+  webSocket: WebSocket
+): void {
+  const { ownPublicId, ownPrivateId, clientPlayerMap } = gameState;
+  if (!ownPublicId || !ownPrivateId) return;
+  const ownPlayer: Player | undefined = clientPlayerMap[ownPublicId];
+  if (!ownPlayer) return;
+  webSocket.send(buildPlayerInputMessage(ownPrivateId, ownPlayer.inputMap));
 }

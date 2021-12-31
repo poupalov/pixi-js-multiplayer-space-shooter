@@ -1,15 +1,10 @@
 import { GameState } from "./main";
-import {
-  Player,
-  PlayerInput,
-  PlayerInputEvent,
-  updatePlayerPosition,
-} from "./player";
+import { Player, PlayerInputEvent, updatePlayerPosition } from "./player";
 
 export type PlayerMessage = PlayerInputMessage;
 type PlayerInputMessage = {
   type: "input";
-  playerId: string;
+  privateId: string;
   inputMap: { [playerInput: string]: boolean };
 };
 
@@ -29,8 +24,7 @@ function handlePlayerInputMessage(
   gameState: GameState,
   message: PlayerInputMessage
 ) {
-  const player: Player | undefined =
-    gameState.playerIdToPlayerMap[message.playerId];
+  const player: Player | undefined = gameState.playerMap[message.privateId];
   if (!player) return;
   const inputEvent: PlayerInputEvent = {
     timestamp: Number((new Date().valueOf() / 1000).toString()),
@@ -42,19 +36,24 @@ function handlePlayerInputMessage(
 type ServerMessage = ServerConnectionSuccessMessage | ServerGameStateMessage;
 type ServerConnectionSuccessMessage = {
   type: "connectionSuccess";
-  playerId: string;
+  publicId: string;
+  privateId: string;
 };
 type ServerGameStateMessage = {
   type: "gameState";
-  playerIdToPlayerMap: {
-    [playerId: string]: { id: string; x: number; y: number };
+  serverPlayerMap: {
+    [publicPlayerId: string]: { publicId: string; x: number; y: number };
   };
 };
 
-export function buildConnectionSuccessMessage(playerId: string): string {
+export function buildConnectionSuccessMessage(
+  publicId: string,
+  privateId: string
+): string {
   const message: ServerConnectionSuccessMessage = {
     type: "connectionSuccess",
-    playerId,
+    publicId,
+    privateId,
   };
   return JSON.stringify(message);
 }
@@ -62,13 +61,11 @@ export function buildConnectionSuccessMessage(playerId: string): string {
 export function buildGameStateMessage(gameState: GameState): string {
   const gameStateMessage: ServerGameStateMessage = {
     type: "gameState",
-    playerIdToPlayerMap: {},
+    serverPlayerMap: {},
   };
-  for (const [playerId, player] of Object.entries(
-    gameState.playerIdToPlayerMap
-  )) {
-    const { id, x, y } = player;
-    gameStateMessage.playerIdToPlayerMap[playerId] = { id, x, y };
+  for (const player of Object.values(gameState.playerMap)) {
+    const { publicId, x, y } = player;
+    gameStateMessage.serverPlayerMap[publicId] = { publicId, x, y };
   }
   return JSON.stringify(gameStateMessage);
 }

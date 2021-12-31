@@ -1,21 +1,17 @@
-import * as PIXI from "pixi.js";
-
 import { GameState } from "./game";
-import { Player } from "./player";
 
 export type PlayerMessage = PlayerInputMessage;
 type PlayerInputMessage = {
   type: "input";
-  playerId: string;
+  privateId: string;
   inputMap: { [playerInput: string]: boolean };
 };
 
-export function buildPlayerInputMessage(player: Player): string {
-  const message: PlayerInputMessage = {
-    type: "input",
-    playerId: player.id,
-    inputMap: player.inputMap,
-  };
+export function buildPlayerInputMessage(
+  privateId: string,
+  inputMap: { [playerInput: string]: boolean }
+): string {
+  const message: PlayerInputMessage = { type: "input", privateId, inputMap };
   return JSON.stringify(message);
 }
 
@@ -24,44 +20,43 @@ export type ServerMessage =
   | ServerGameStateMessage;
 type ServerConnectionSuccessMessage = {
   type: "connectionSuccess";
-  playerId: string;
+  publicId: string;
+  privateId: string;
 };
 type ServerGameStateMessage = {
   type: "gameState";
-  playerIdToPlayerMap: {
-    [playerId: string]: { id: string; x: number; y: number };
+  serverPlayerMap: {
+    [publicPlayerId: string]: { publicId: string; x: number; y: number };
   };
 };
 
 export function handleServerMessage(
-  app: PIXI.Application,
   gameState: GameState,
   message: ServerMessage
 ): void {
   switch (message.type) {
     case "connectionSuccess":
-      return handleServerConnectionSuccessMessage(app, gameState, message);
+      return handleServerConnectionSuccessMessage(gameState, message);
     case "gameState":
-      return handleServerGameStateMessage(app, gameState, message);
+      return handleServerGameStateMessage(gameState, message);
     default:
       return;
   }
 }
 
 function handleServerConnectionSuccessMessage(
-  app: PIXI.Application,
   gameState: GameState,
   message: ServerConnectionSuccessMessage
 ): void {
-  gameState.ownPlayerId = message.playerId;
+  gameState.ownPublicId = message.publicId;
+  gameState.ownPrivateId = message.privateId;
 }
 
 function handleServerGameStateMessage(
-  app: PIXI.Application,
   gameState: GameState,
   message: ServerGameStateMessage
 ): void {
-  gameState.serverPlayerMap = message.playerIdToPlayerMap;
+  gameState.serverPlayerMap = message.serverPlayerMap;
 }
 
 export function parseMessage<T>(messageString: string): T | undefined {
